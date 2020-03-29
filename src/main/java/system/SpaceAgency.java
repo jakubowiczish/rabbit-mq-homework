@@ -1,50 +1,97 @@
 package system;
 
-import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.*;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
 
-import static system.ChannelUtils.*;
-import static system.ServiceType.*;
+import static system.ChannelUtil.*;
+import static system.ServiceType.printAllAvailableTypesOfServices;
+import static system.Utils.createDefaultChannel;
 
+@Slf4j
 public class SpaceAgency {
 
-    public static void main(String[] args) throws IOException, TimeoutException {
-        System.out.println("Space Agency");
+    public static final String SPACE_AGENCY_EXCHANGE = "SPACE_AGENCY_EXCHANGE";
 
-        Channel channel = createChannel(HOST_NAME, SPACE_AGENCY_EXCHANGE_NAME, DIRECT_EXCHANGE_TYPE);
+    private final String name;
+    private final Channel channel;
 
-        List<Integer> requestsIds = new ArrayList<>();
+    private long requestId;
 
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-        String agencyName = chooseAgencyName(bufferedReader);
+    public SpaceAgency(String name) {
+        this.name = name;
+        this.channel = createInitializedChannel();
+    }
+
+    @SneakyThrows
+    public void start() {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         while (true) {
-            ServiceType serviceType = chooseService(bufferedReader);
-            if (ServiceType.EXIT.equals(serviceType)) {
-                break;
-            }
+            printAllAvailableTypesOfServices("Choose type of service from available: ");
 
-            int id = requestsIds.size() + 1;
-            requestsIds.add(id);
-            String message = "Request from agency: " + agencyName + ". Request id: " + id;
-            channel.basicPublish(SPACE_AGENCY_EXCHANGE_NAME,
-                    serviceType.toString(),
-                    null,
-                    message.getBytes(StandardCharsets.UTF_8));
+            String input = br.readLine();
+            if ("exit".equals(input)) stop("Exit requested...");
+
+            String serviceType = ServiceType.fromString(input).toString();
+            AMQP.BasicProperties properties = createProperties();
+            String messageToSend = createMessageToSend(serviceType);
+
+            channel.basicPublish(
+                    SPACE_AGENCY_EXCHANGE,
+                    serviceType,
+                    properties,
+                    messageToSend.getBytes(StandardCharsets.UTF_8));
+            requestId += 1;
         }
     }
 
     @SneakyThrows
-    private static String chooseAgencyName(BufferedReader bufferedReader) {
-        System.out.println("Choose a name for your space agency: ");
-        return bufferedReader.readLine();
+    private Channel createInitializedChannel() {
+        Channel channel = createDefaultChannel();
+        channel.exchangeDeclare(SPACE_AGENCY_EXCHANGE, BuiltinExchangeType.TOPIC);
+        initQueue(channel, name);
+
+        Consumer consumer = createConsumerForChannel();
+        consume(channel, name, consumer);
+        return channel;
+    }
+
+    @SneakyThrows
+    private void initQueue(Channel channel, String name) {
+        channel.queueDeclare(name, false, false, false, null);
+        channel.queueBind(name, SPACE_AGENCY_EXCHANGE, createAgencyRoutingKey(name));
+    }
+
+    public Consumer createConsumerForChannel() {
+        return new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                String message = new String(body, StandardCharsets.UTF_8);
+                System.out.println(message);
+                channel.basicAck(envelope.getDeliveryTag(), false);
+            }
+        };
+    }
+
+    private AMQP.BasicProperties createProperties() {
+        return new AMQP.BasicProperties
+                .Builder()
+                .correlationId(String.valueOf(requestId))
+                .replyTo(createAgencyRoutingKey(name))
+                .build();
+    }
+
+    private String createMessageToSend(String serviceType) {
+        return "Request number: " + requestId + " from " + name + " for " + serviceType;
+    }
+
+    private static String createAgencyRoutingKey(String name) {
+        return "AGENCY#" + name;
     }
 }

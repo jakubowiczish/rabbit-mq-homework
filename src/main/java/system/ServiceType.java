@@ -1,24 +1,17 @@
 package system;
 
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 
-import java.io.BufferedReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 @AllArgsConstructor
 public enum ServiceType {
 
-    PEOPLES_TRANSPORT("people"),
-    CARGO_TRANSPORT("cargo"),
-    PLACEMENT_ON_ORBIT("orbit"),
-    EXIT("exit");
+    PEOPLES_TRANSPORT("Transport of people"),
+    CARGO_TRANSPORT("Transport of cargo"),
+    PLACEMENT_ON_ORBIT("Transport to an orbit");
 
     private String name;
 
@@ -28,44 +21,28 @@ public enum ServiceType {
     }
 
     public static String getAllAvailableTypesAsString() {
-        return Arrays.stream(values())
-                .map(type -> "[" + type.name + "]")
+        return IntStream.range(0, values().length)
+                .mapToObj(i -> "\n" + i + " [" + values()[i] + "]")
                 .collect(joining());
     }
 
-    public static ServiceType fromString(String text) {
-        for (ServiceType serviceType : values()) {
-            if (serviceType.name.equalsIgnoreCase(text)) {
-                return serviceType;
-            }
-        }
-
-        throw new IllegalArgumentException("No such service type as: " + text);
+    public static void printAllAvailableTypesOfServices(String prefix) {
+        System.out.println(prefix);
+        System.out.println(getAllAvailableTypesAsString());
+        System.out.println("Type \"exit\" to exit");
     }
 
-    @SneakyThrows
-    public static ServiceType chooseService(BufferedReader bufferedReader) {
-        System.out.println("Choose service type from available: " + getAllAvailableTypesAsString());
-        String serviceTypeString = bufferedReader.readLine();
+    public static ServiceType fromString(String serviceType) {
+        int serviceNumber = Integer.parseInt(serviceType);
 
-        ServiceType serviceType = null;
-        try {
-            serviceType = fromString(serviceTypeString);
-        } catch (IllegalArgumentException | NullPointerException e) {
-            System.out.println("No such type available, try again");
-            chooseService(bufferedReader);
+        switch (serviceNumber) {
+            case 2:
+                return CARGO_TRANSPORT;
+            case 3:
+                return PLACEMENT_ON_ORBIT;
+            default:
+                return PEOPLES_TRANSPORT;
         }
-
-        return serviceType;
     }
 
-    @SneakyThrows
-    public static List<ServiceType> chooseProvidedServices(BufferedReader bufferedReader) {
-        List<ServiceType> list = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
-            ServiceType serviceType = chooseService(bufferedReader);
-            list.add(serviceType);
-        }
-        return list;
-    }
 }
