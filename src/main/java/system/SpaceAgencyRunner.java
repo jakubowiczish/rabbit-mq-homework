@@ -2,14 +2,11 @@ package system;
 
 import lombok.SneakyThrows;
 
-import java.io.IOException;
-import java.util.concurrent.TimeoutException;
-
 import static system.Utils.getFirstReadLine;
 
 public class SpaceAgencyRunner {
 
-    public static void main(String[] args) throws IOException, TimeoutException {
+    public static void main(String[] args) {
         String name = chooseName();
         SpaceAgency spaceAgency = new SpaceAgency(name);
         spaceAgency.start();

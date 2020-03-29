@@ -11,11 +11,12 @@ import java.util.Objects;
 
 import static system.ChannelUtil.*;
 import static system.ServiceType.printAllAvailableTypesOfServices;
+import static system.SpaceAgency.SPACE_AGENCY_EXCHANGE;
 import static system.Utils.createDefaultChannel;
 
 public class Carrier {
 
-    public static final String CARRIER_EXCHANGE = "CARRIER_EXCHANGE";
+//    public static final String CARRIER_EXCHANGE = "CARRIER_EXCHANGE";
 
     private final String name;
     private final Channel channel;
@@ -26,14 +27,14 @@ public class Carrier {
     }
 
     public void start() {
-
+        System.out.println("Waiting for requests...");
     }
 
     @SneakyThrows
     private Channel createInitializedChannel() {
         Channel channel = createDefaultChannel();
         channel.basicQos(0);
-        channel.exchangeDeclare(CARRIER_EXCHANGE, BuiltinExchangeType.TOPIC);
+        channel.exchangeDeclare(SPACE_AGENCY_EXCHANGE, BuiltinExchangeType.TOPIC);
 
         String[] typesOfServices = chooseTypesOfServices();
         String firstTypeOfService = ServiceType.fromString(typesOfServices[0]).toString();
@@ -43,7 +44,8 @@ public class Carrier {
         initQueue(channel, secondTypeOfService);
 
         Consumer consumer = createConsumerForChannel();
-        consume(channel, name, consumer);
+        consume(channel, firstTypeOfService, consumer);
+        consume(channel, secondTypeOfService, consumer);
         return channel;
     }
 
@@ -53,10 +55,10 @@ public class Carrier {
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String first = br.readLine();
+        if ("exit".equals(first)) stop("Exit requested...");
         System.out.println("Choose once more");
         String second = br.readLine();
-
-        if ("exit".equals(first) || "exit".equals(second)) stop("Exit requested...");
+        if ("exit".equals(second)) stop("Exit requested...");
 
         if (Objects.equals(first, second)) {
             System.out.println("You have to choose 2 different types of services");
@@ -69,7 +71,8 @@ public class Carrier {
     @SneakyThrows
     private void initQueue(Channel channel, String service) {
         channel.queueDeclare(service, false, false, false, null);
-        channel.queueBind(service, CARRIER_EXCHANGE, createCarrierRoutingKey(service));
+//        channel.queueBind(service, CARRIER_EXCHANGE, createCarrierRoutingKey(service));
+        channel.queueBind(service, SPACE_AGENCY_EXCHANGE, service);
     }
 
     private Consumer createConsumerForChannel() {
@@ -86,7 +89,7 @@ public class Carrier {
                         " has been performed successfully by " + name;
 
                 channel.basicPublish(
-                        CARRIER_EXCHANGE,
+                        SPACE_AGENCY_EXCHANGE,
                         properties.getReplyTo(),
                         properties,
                         response.getBytes(StandardCharsets.UTF_8));
@@ -95,8 +98,8 @@ public class Carrier {
         };
     }
 
-    private static String createCarrierRoutingKey(String name) {
-        return "CARRIER#" + name;
-    }
+//    private static String createCarrierRoutingKey(String name) {
+//        return "CARRIER#" + name;
+//    }
 
 }

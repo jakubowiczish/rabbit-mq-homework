@@ -32,7 +32,7 @@ public class SpaceAgency {
     public void start() {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        while (true) {
+//        while (true) {
             printAllAvailableTypesOfServices("Choose type of service from available: ");
 
             String input = br.readLine();
@@ -48,7 +48,7 @@ public class SpaceAgency {
                     properties,
                     messageToSend.getBytes(StandardCharsets.UTF_8));
             requestId += 1;
-        }
+//        }
     }
 
     @SneakyThrows
