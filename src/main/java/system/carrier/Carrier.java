@@ -1,7 +1,8 @@
-package system;
+package system.carrier;
 
 import com.rabbitmq.client.*;
 import lombok.SneakyThrows;
+import system.enums.ServiceType;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,21 +10,19 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import static system.ChannelUtil.*;
-import static system.ServiceType.printAllAvailableTypesOfServices;
-import static system.SpaceAgency.SPACE_AGENCY_EXCHANGE;
-import static system.Utils.createDefaultChannel;
+import static system.enums.ExchangeTypes.SPACE_AGENCY_EXCHANGE;
+import static system.enums.ServiceType.printAllAvailableTypesOfServices;
+import static system.util.Utils.createDefaultChannel;
+import static system.util.Utils.stop;
 
 public class Carrier {
 
-//    public static final String CARRIER_EXCHANGE = "CARRIER_EXCHANGE";
-
     private final String name;
-    private final Channel channel;
+    private final Channel regularChannel;
 
     public Carrier(String name) {
         this.name = name;
-        this.channel = createInitializedChannel();
+        this.regularChannel = createInitializedChannel();
     }
 
     public void start() {
@@ -34,18 +33,18 @@ public class Carrier {
     private Channel createInitializedChannel() {
         Channel channel = createDefaultChannel();
         channel.basicQos(0);
-        channel.exchangeDeclare(SPACE_AGENCY_EXCHANGE, BuiltinExchangeType.TOPIC);
+        channel.exchangeDeclare(SPACE_AGENCY_EXCHANGE.getName(), BuiltinExchangeType.TOPIC);
 
         String[] typesOfServices = chooseTypesOfServices();
-        String firstTypeOfService = ServiceType.fromString(typesOfServices[0]).toString();
-        String secondTypeOfService = ServiceType.fromString(typesOfServices[1]).toString();
+        String firstTypeOfService = ServiceType.fromString(typesOfServices[0]).getName();
+        String secondTypeOfService = ServiceType.fromString(typesOfServices[1]).getName();
 
         initQueue(channel, firstTypeOfService);
         initQueue(channel, secondTypeOfService);
 
         Consumer consumer = createConsumerForChannel();
-        consume(channel, firstTypeOfService, consumer);
-        consume(channel, secondTypeOfService, consumer);
+        channel.basicConsume(firstTypeOfService, false, consumer);
+        channel.basicConsume(secondTypeOfService, false, consumer);
         return channel;
     }
 
@@ -71,12 +70,11 @@ public class Carrier {
     @SneakyThrows
     private void initQueue(Channel channel, String service) {
         channel.queueDeclare(service, false, false, false, null);
-//        channel.queueBind(service, CARRIER_EXCHANGE, createCarrierRoutingKey(service));
-        channel.queueBind(service, SPACE_AGENCY_EXCHANGE, service);
+        channel.queueBind(service, SPACE_AGENCY_EXCHANGE.getName(), service);
     }
 
     private Consumer createConsumerForChannel() {
-        return new DefaultConsumer(channel) {
+        return new DefaultConsumer(regularChannel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                 String message = new String(body, StandardCharsets.UTF_8);
@@ -88,18 +86,13 @@ public class Carrier {
                 String response = "Task with request id number : " + properties.getCorrelationId() +
                         " has been performed successfully by " + name;
 
-                channel.basicPublish(
-                        SPACE_AGENCY_EXCHANGE,
+                regularChannel.basicPublish(
+                        SPACE_AGENCY_EXCHANGE.getName(),
                         properties.getReplyTo(),
                         properties,
                         response.getBytes(StandardCharsets.UTF_8));
-                channel.basicAck(envelope.getDeliveryTag(), false);
+                regularChannel.basicAck(envelope.getDeliveryTag(), false);
             }
         };
     }
-
-//    private static String createCarrierRoutingKey(String name) {
-//        return "CARRIER#" + name;
-//    }
-
 }

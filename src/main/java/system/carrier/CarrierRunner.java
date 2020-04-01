@@ -1,6 +1,6 @@
-package system;
+package system.carrier;
 
-import static system.Utils.getFirstReadLine;
+import static system.util.Utils.getFirstReadLine;
 
 public class CarrierRunner {
 

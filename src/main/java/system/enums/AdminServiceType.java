@@ -1,25 +1,22 @@
-package system;
+package system.enums;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.joining;
 
+@Getter
 @AllArgsConstructor
-public enum ServiceType {
+public enum AdminServiceType {
 
-    PEOPLES_TRANSPORT("transport of people"),
-    CARGO_TRANSPORT("transport of cargo"),
-    PLACEMENT_ON_ORBIT("transport to an orbit");
+    CARRIERS_AND_AGENCIES("AGENCY.CARRIER"),
+    AGENCIES("AGENCY.#"),
+    CARRIERS("CARRIER.#");
 
     private String name;
-
-    @Override
-    public String toString() {
-        return name;
-    }
 
     public static String getAllAvailableTypesAsString() {
         return IntStream.range(0, values().length)
@@ -34,26 +31,25 @@ public enum ServiceType {
     }
 
     @SneakyThrows
-    public static ServiceType fromString(String serviceType) {
+    public static AdminServiceType fromString(String serviceType) {
         int serviceNumber;
         try {
             serviceNumber = Integer.parseInt(serviceType);
         } catch (NumberFormatException e) {
-            System.out.println("Bad number, you'll be transporting cargo");
-            return CARGO_TRANSPORT;
+            System.out.println("Bad number, you'll be sending message to both agencies and carriers");
+            return CARRIERS_AND_AGENCIES;
         }
 
         switch (serviceNumber) {
             case 1:
-                System.out.println("You chose " + CARGO_TRANSPORT.toString());
-                return CARGO_TRANSPORT;
+//                System.out.println("You chose " + CARGO_TRANSPORT.toString());
+                return AGENCIES;
             case 2:
-                System.out.println("You chose " + PLACEMENT_ON_ORBIT.toString());
-                return PLACEMENT_ON_ORBIT;
+//                System.out.println("You chose " + PLACEMENT_ON_ORBIT.toString());
+                return CARRIERS;
             default:
-                System.out.println("You chose " + PEOPLES_TRANSPORT.toString());
-                return PEOPLES_TRANSPORT;
+//                System.out.println("You chose " + PEOPLES_TRANSPORT.toString());
+                return CARRIERS_AND_AGENCIES;
         }
     }
-
 }

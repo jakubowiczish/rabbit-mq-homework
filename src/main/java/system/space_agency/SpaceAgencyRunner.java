@@ -1,8 +1,8 @@
-package system;
+package system.space_agency;
 
 import lombok.SneakyThrows;
 
-import static system.Utils.getFirstReadLine;
+import static system.util.Utils.getFirstReadLine;
 
 public class SpaceAgencyRunner {
 
