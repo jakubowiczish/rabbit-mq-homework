@@ -23,14 +23,13 @@ public class SpaceAgency {
 
     private final String name;
     private final Channel regularChannel;
-    private final Channel adminChannel;
 
     private long requestId;
 
     public SpaceAgency(String name) {
         this.name = name;
         this.regularChannel = createRegularChannel();
-        this.adminChannel = createAdminChannel();
+        createAdminChannel();
     }
 
     private static String createAgencyRoutingKey(String name) {
@@ -84,13 +83,12 @@ public class SpaceAgency {
     }
 
     @SneakyThrows
-    private Channel createAdminChannel() {
+    private void createAdminChannel() {
         Channel channel = createDefaultChannel();
         channel.exchangeDeclare(ADMIN_EXCHANGE.getName(), BuiltinExchangeType.TOPIC);
         String adminQueue = channel.queueDeclare().getQueue();
         channel.queueBind(adminQueue, ADMIN_EXCHANGE.getName(), AGENCIES.getName());
         Consumer consumer = createDefaultConsumer(channel, "");
         channel.basicConsume(adminQueue, false, consumer);
-        return channel;
     }
 }

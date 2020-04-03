@@ -10,10 +10,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+import static system.enums.AdminServiceType.CARRIERS;
+import static system.enums.ExchangeTypes.ADMIN_EXCHANGE;
 import static system.enums.ExchangeTypes.SPACE_AGENCY_EXCHANGE;
 import static system.enums.ServiceType.printAllAvailableTypesOfServices;
-import static system.util.Utils.createDefaultChannel;
-import static system.util.Utils.stop;
+import static system.util.Utils.*;
 
 public class Carrier {
 
@@ -23,6 +24,7 @@ public class Carrier {
     public Carrier(String name) {
         this.name = name;
         this.regularChannel = createInitializedChannel();
+        createAdminChannel();
     }
 
     public void start() {
@@ -94,5 +96,15 @@ public class Carrier {
                 regularChannel.basicAck(envelope.getDeliveryTag(), false);
             }
         };
+    }
+
+    @SneakyThrows
+    private void createAdminChannel() {
+        Channel channel = createDefaultChannel();
+        channel.exchangeDeclare(ADMIN_EXCHANGE.getName(), BuiltinExchangeType.TOPIC);
+        String adminQueue = channel.queueDeclare().getQueue();
+        channel.queueBind(adminQueue, ADMIN_EXCHANGE.getName(), CARRIERS.getName());
+        Consumer consumer = createDefaultConsumer(channel, "");
+        channel.basicConsume(adminQueue, false, consumer);
     }
 }

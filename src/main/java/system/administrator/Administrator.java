@@ -17,6 +17,8 @@ import static system.util.Utils.*;
 
 public class Administrator {
 
+    private static final String ADMIN_KEY = "#";
+
     private final Channel regularChannel;
     private final Channel adminChannel;
     private String name;
@@ -53,7 +55,7 @@ public class Administrator {
         Channel channel = createDefaultChannel();
         channel.exchangeDeclare(SPACE_AGENCY_EXCHANGE.getName(), BuiltinExchangeType.TOPIC);
         channel.queueDeclare(name, false, false, false, null);
-        channel.queueBind(name, SPACE_AGENCY_EXCHANGE.getName(), createAdminKey());
+        channel.queueBind(name, SPACE_AGENCY_EXCHANGE.getName(), ADMIN_KEY);
         Consumer consumer = createDefaultConsumer(channel, "---");
         channel.basicConsume(name, false, consumer);
         return channel;
@@ -70,9 +72,5 @@ public class Administrator {
     private String createMessageToSend(BufferedReader br) {
         System.out.println("Enter your message: ");
         return "ADMIN'S MESSAGE: " + br.readLine();
-    }
-
-    private String createAdminKey() {
-        return "ADMIN." + name;
     }
 }

@@ -14,7 +14,7 @@ public enum AdminServiceType {
 
     CARRIERS_AND_AGENCIES("AGENCY.CARRIER"),
     AGENCIES("AGENCY.#"),
-    CARRIERS("CARRIER.#");
+    CARRIERS("#.CARRIER");
 
     private String name;
 
