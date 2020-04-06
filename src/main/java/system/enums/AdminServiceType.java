@@ -7,6 +7,8 @@ import lombok.SneakyThrows;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.joining;
+import static system.util.ColouredPrinter.printlnColoured;
+import static system.util.ConsoleColor.*;
 
 @Getter
 @AllArgsConstructor
@@ -20,14 +22,13 @@ public enum AdminServiceType {
 
     public static String getAllAvailableTypesAsString() {
         return IntStream.range(0, values().length)
-                .mapToObj(i -> "\n\t- " + i + " [" + values()[i] + "]")
-                .collect(joining());
+                .mapToObj(i -> i + " [" + values()[i] + "]")
+                .collect(joining(", "));
     }
 
     public static void printAllAvailableTypesOfServices(String prefix) {
-        System.out.print(prefix);
-        System.out.println(getAllAvailableTypesAsString());
-        System.out.println("Type \"exit\" to exit");
+        String message = prefix + getAllAvailableTypesAsString() + "\n" + "Type \"exit\" to exit";
+        printlnColoured(message, GREEN_BOLD_BRIGHT);
     }
 
     @SneakyThrows
@@ -36,19 +37,19 @@ public enum AdminServiceType {
         try {
             serviceNumber = Integer.parseInt(serviceType);
         } catch (NumberFormatException e) {
-            System.out.println("Bad number, you'll be sending message to both agencies and carriers");
+            printlnColoured("Bad number, you'll be sending message to both agencies and carriers", YELLOW_BOLD_BRIGHT);
             return CARRIERS_AND_AGENCIES;
         }
 
         switch (serviceNumber) {
             case 1:
-//                System.out.println("You chose " + CARGO_TRANSPORT.toString());
+                printlnColoured("You chose to send a message to all agencies", MAGENTA_BOLD_BRIGHT);
                 return AGENCIES;
             case 2:
-//                System.out.println("You chose " + PLACEMENT_ON_ORBIT.toString());
+                printlnColoured("You chose to send a message to all carriers", MAGENTA_BOLD_BRIGHT);
                 return CARRIERS;
             default:
-//                System.out.println("You chose " + PEOPLES_TRANSPORT.toString());
+                printlnColoured("You chose to send a message to all agencies and carriers", MAGENTA_BOLD_BRIGHT);
                 return CARRIERS_AND_AGENCIES;
         }
     }

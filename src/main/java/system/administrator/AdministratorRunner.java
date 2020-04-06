@@ -1,20 +1,12 @@
 package system.administrator;
 
-import lombok.SneakyThrows;
-
-import static system.util.Utils.getFirstReadLine;
+import static system.util.Utils.chooseName;
 
 public class AdministratorRunner {
 
     public static void main(String[] args) {
-        String name = chooseName();
+        String name = chooseName("administrator");
         Administrator administrator = new Administrator(name);
         administrator.start();
-    }
-
-    @SneakyThrows
-    private static String chooseName() {
-        System.out.println("Choose name as an administrator:");
-        return getFirstReadLine();
     }
 }

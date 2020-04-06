@@ -13,9 +13,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import static system.enums.AdminServiceType.AGENCIES;
-import static system.enums.ExchangeTypes.ADMIN_EXCHANGE;
 import static system.enums.ExchangeTypes.SPACE_AGENCY_EXCHANGE;
 import static system.enums.ServiceType.printAllAvailableTypesOfServices;
+import static system.util.ColouredPrinter.printlnColoured;
+import static system.util.ConsoleColor.BLUE_BOLD_BRIGHT;
 import static system.util.Utils.*;
 
 @Slf4j
@@ -29,7 +30,7 @@ public class SpaceAgency {
     public SpaceAgency(String name) {
         this.name = name;
         this.regularChannel = createRegularChannel();
-        createAdminChannel();
+        createAdminChannelForUsers(AGENCIES.getName());
     }
 
     private static String createAgencyRoutingKey(String name) {
@@ -42,20 +43,23 @@ public class SpaceAgency {
 
         while (true) {
             printAllAvailableTypesOfServices("Choose type of service from available: ");
-
             String input = br.readLine();
+
             if ("exit".equals(input)) stop("Exit requested...");
 
             String serviceType = ServiceType.fromString(input).getName();
             AMQP.BasicProperties properties = createProperties();
-            String messageToSend = createMessageToSend(serviceType);
+            String requestToSend = createRequest(serviceType);
 
             regularChannel.basicPublish(
                     SPACE_AGENCY_EXCHANGE.getName(),
                     serviceType,
                     properties,
-                    messageToSend.getBytes(StandardCharsets.UTF_8));
-            requestId += 1;
+                    requestToSend.getBytes(StandardCharsets.UTF_8));
+
+            printlnColoured("REQUEST SENT: " + requestToSend, BLUE_BOLD_BRIGHT);
+
+            incrementRequestId();
         }
     }
 
@@ -78,17 +82,11 @@ public class SpaceAgency {
                 .build();
     }
 
-    private String createMessageToSend(String serviceType) {
-        return "Request number: " + requestId + " from " + name + " for " + serviceType;
+    private String createRequest(String serviceType) {
+        return "Request: [" + requestId + "]" + " from space agency " + name + " for " + serviceType;
     }
 
-    @SneakyThrows
-    private void createAdminChannel() {
-        Channel channel = createDefaultChannel();
-        channel.exchangeDeclare(ADMIN_EXCHANGE.getName(), BuiltinExchangeType.TOPIC);
-        String adminQueue = channel.queueDeclare().getQueue();
-        channel.queueBind(adminQueue, ADMIN_EXCHANGE.getName(), AGENCIES.getName());
-        Consumer consumer = createDefaultConsumer(channel, "");
-        channel.basicConsume(adminQueue, false, consumer);
+    private void incrementRequestId() {
+        requestId += 1;
     }
 }

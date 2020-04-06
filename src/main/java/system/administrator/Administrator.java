@@ -13,19 +13,21 @@ import java.nio.charset.StandardCharsets;
 import static system.enums.AdminServiceType.printAllAvailableTypesOfServices;
 import static system.enums.ExchangeTypes.ADMIN_EXCHANGE;
 import static system.enums.ExchangeTypes.SPACE_AGENCY_EXCHANGE;
+import static system.util.ColouredPrinter.printlnColoured;
+import static system.util.ConsoleColor.BLUE_BOLD_BRIGHT;
+import static system.util.ConsoleColor.GREEN_BOLD_BRIGHT;
 import static system.util.Utils.*;
 
 public class Administrator {
 
     private static final String ADMIN_KEY = "#";
 
-    private final Channel regularChannel;
+    private final String name;
     private final Channel adminChannel;
-    private String name;
 
     public Administrator(String name) {
         this.name = name;
-        this.regularChannel = createRegularChannel();
+        createRegularChannel();
         this.adminChannel = createAdminChannel();
     }
 
@@ -47,18 +49,19 @@ public class Administrator {
                     adminServiceType,
                     null,
                     messageToSend.getBytes(StandardCharsets.UTF_8));
+
+            printlnColoured("MESSAGE SENT: " + messageToSend, BLUE_BOLD_BRIGHT);
         }
     }
 
     @SneakyThrows
-    private Channel createRegularChannel() {
+    private void createRegularChannel() {
         Channel channel = createDefaultChannel();
         channel.exchangeDeclare(SPACE_AGENCY_EXCHANGE.getName(), BuiltinExchangeType.TOPIC);
         channel.queueDeclare(name, false, false, false, null);
         channel.queueBind(name, SPACE_AGENCY_EXCHANGE.getName(), ADMIN_KEY);
-        Consumer consumer = createDefaultConsumer(channel, "---");
+        Consumer consumer = createDefaultConsumer(channel, "");
         channel.basicConsume(name, false, consumer);
-        return channel;
     }
 
     @SneakyThrows
@@ -70,7 +73,7 @@ public class Administrator {
 
     @SneakyThrows
     private String createMessageToSend(BufferedReader br) {
-        System.out.println("Enter your message: ");
-        return "ADMIN'S MESSAGE: " + br.readLine();
+        printlnColoured("Enter your message: ", GREEN_BOLD_BRIGHT);
+        return br.readLine();
     }
 }

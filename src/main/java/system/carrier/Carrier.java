@@ -11,9 +11,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import static system.enums.AdminServiceType.CARRIERS;
-import static system.enums.ExchangeTypes.ADMIN_EXCHANGE;
 import static system.enums.ExchangeTypes.SPACE_AGENCY_EXCHANGE;
 import static system.enums.ServiceType.printAllAvailableTypesOfServices;
+import static system.util.ColouredPrinter.printlnColoured;
+import static system.util.ConsoleColor.*;
 import static system.util.Utils.*;
 
 public class Carrier {
@@ -24,11 +25,11 @@ public class Carrier {
     public Carrier(String name) {
         this.name = name;
         this.regularChannel = createInitializedChannel();
-        createAdminChannel();
+        createAdminChannelForUsers(CARRIERS.getName());
     }
 
     public void start() {
-        System.out.println("Waiting for requests...");
+        printlnColoured("Waiting for requests...", BLUE_BOLD_BRIGHT);
     }
 
     @SneakyThrows
@@ -57,12 +58,14 @@ public class Carrier {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String first = br.readLine();
         if ("exit".equals(first)) stop("Exit requested...");
-        System.out.println("Choose once more");
+
+        printlnColoured("Choose once more", CYAN_BOLD);
+
         String second = br.readLine();
         if ("exit".equals(second)) stop("Exit requested...");
 
         if (Objects.equals(first, second)) {
-            System.out.println("You have to choose 2 different types of services");
+            printlnColoured("You have to choose 2 different types of services", RED_BOLD_BRIGHT);
             chooseTypesOfServices();
         }
 
@@ -80,10 +83,10 @@ public class Carrier {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                 String message = new String(body, StandardCharsets.UTF_8);
-                System.out.println("Message received: " + message);
-                System.out.println("Request " + properties.getCorrelationId()
+                printlnColoured("REQUEST RECEIVED: " + message, BLUE_BOLD_BRIGHT);
+                printlnColoured("Request " + properties.getCorrelationId()
                         + " for " + properties.getReplyTo()
-                        + " received. Task performed successfully.");
+                        + " received and handled successfully.", GREEN_BOLD_BRIGHT);
 
                 String response = "Task with request id number : " + properties.getCorrelationId() +
                         " has been performed successfully by " + name;
@@ -93,18 +96,11 @@ public class Carrier {
                         properties.getReplyTo(),
                         properties,
                         response.getBytes(StandardCharsets.UTF_8));
+
+                printlnColoured("RESPONSE SENT: " + response, BLUE_BOLD_BRIGHT);
+
                 regularChannel.basicAck(envelope.getDeliveryTag(), false);
             }
         };
-    }
-
-    @SneakyThrows
-    private void createAdminChannel() {
-        Channel channel = createDefaultChannel();
-        channel.exchangeDeclare(ADMIN_EXCHANGE.getName(), BuiltinExchangeType.TOPIC);
-        String adminQueue = channel.queueDeclare().getQueue();
-        channel.queueBind(adminQueue, ADMIN_EXCHANGE.getName(), CARRIERS.getName());
-        Consumer consumer = createDefaultConsumer(channel, "");
-        channel.basicConsume(adminQueue, false, consumer);
     }
 }

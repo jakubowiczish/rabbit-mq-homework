@@ -1,17 +1,12 @@
 package system.carrier;
 
-import static system.util.Utils.getFirstReadLine;
+import static system.util.Utils.chooseName;
 
 public class CarrierRunner {
 
     public static void main(String[] args) {
-        String name = chooseName();
+        String name = chooseName("carrier");
         Carrier carrier = new Carrier(name);
         carrier.start();
-    }
-
-    private static String chooseName() {
-        System.out.println("Choose name for your carrier: ");
-        return getFirstReadLine();
     }
 }
