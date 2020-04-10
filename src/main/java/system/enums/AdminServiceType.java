@@ -18,7 +18,7 @@ public enum AdminServiceType {
     AGENCIES("AGENCY.#"),
     CARRIERS("#.CARRIER");
 
-    private String name;
+    private final String name;
 
     public static String getAllAvailableTypesAsString() {
         return IntStream.range(0, values().length)

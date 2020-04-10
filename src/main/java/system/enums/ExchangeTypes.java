@@ -10,5 +10,5 @@ public enum ExchangeTypes {
     SPACE_AGENCY_EXCHANGE("SPACE_AGENCY_EXCHANGE"),
     ADMIN_EXCHANGE("ADMIN_EXCHANGE");
 
-    private String name;
+    private final String name;
 }

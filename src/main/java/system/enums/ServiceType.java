@@ -18,7 +18,7 @@ public enum ServiceType {
     CARGO_TRANSPORT("transport of cargo"),
     PLACEMENT_ON_ORBIT("transport to an orbit");
 
-    private String name;
+    private final String name;
 
     public static String getAllAvailableTypesAsString() {
         return IntStream.range(0, values().length)
